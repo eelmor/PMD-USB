@@ -390,7 +390,7 @@
             this.numericUpDownMonitoringInterval.Size = new System.Drawing.Size(61, 20);
             this.numericUpDownMonitoringInterval.TabIndex = 22;
             this.numericUpDownMonitoringInterval.Value = new decimal(new int[] {
-            50,
+            100,
             0,
             0,
             0});

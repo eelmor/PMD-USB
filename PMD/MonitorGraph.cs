@@ -33,7 +33,10 @@ namespace PMD {
             }
             set
             {
-                _maxPoints = value;
+                if (MaxPoints > 0)
+                {
+                    _maxPoints = value;
+                }
             }
         }
 
@@ -100,7 +103,7 @@ namespace PMD {
             // Calculate graph points
             PointF[] graphPoints = new PointF[values.Count];
 
-            float x_step = (float)maxWidth / (float)MaxPoints;
+            float x_step = (float)maxWidth / (float)(MaxPoints - 1);
             for (int i = 0; i < graphPoints.Length; i++)
             {
                 float y = maxHeight / 2 + paddingY;
