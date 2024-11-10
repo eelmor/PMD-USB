@@ -118,18 +118,23 @@ namespace PMD {
             int x_sel = -1;
             for (int i = 0; i < graphPoints.Length; i++)
             {
-                if (graphPoints[i].X > displayX)
+                if (graphPoints[i].X >= displayX)
                 {
                     x_sel = i;
                     break;
                 }
             }
 
-            string valueString = x_sel > 0 && x_sel < values.Count ? values[x_sel].ToString(Sensor.Format) : values.Last().ToString(Sensor.Format);
+            string valueString;
 
             if (x_sel > 0 && x_sel < values.Count) {
+                valueString = values[x_sel].ToString(Sensor.Format);
                 g.FillEllipse(markBrush, displayX - 3, graphPoints[x_sel].Y - 3, 6, 6);
+            } else
+            {
+                valueString = values.Last().ToString(Sensor.Format);
             }
+
             g.DrawString(String.Format("{0,10}", valueString), drawFontLarge, markBrush, new Point(this.Size.Width - 75 - 50, 0));
 
         }
