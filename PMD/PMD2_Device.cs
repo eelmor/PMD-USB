@@ -24,6 +24,10 @@ namespace PMD
             try
             {
                 masterRegKey = Registry.LocalMachine.OpenSubKey(STM32_USB_SERIAL_REGKEY);
+                if (masterRegKey == null)
+                {
+                    throw new Exception("Couldn't open registry key STM32_USB_SERIAL_REGKEY:" + STM32_USB_SERIAL_REGKEY);
+                }
             }
             catch
             {
@@ -195,7 +199,16 @@ namespace PMD
             }
 
             lock (rx_buffer) rx_buffer.Clear();
-            serial_port.Write(new byte[] { cmd }, 0, 1);
+
+            try
+            {
+                serial_port.Write(new byte[] { cmd }, 0, 1);
+            }
+            catch
+            {
+                DeviceMutex.ReleaseMutex();
+                return false;
+            }
 
             Stopwatch sw = new Stopwatch();
             sw.Start();

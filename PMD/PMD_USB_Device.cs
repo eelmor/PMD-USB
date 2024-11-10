@@ -21,6 +21,10 @@ namespace PMD
             try
             {
                 masterRegKey = Registry.LocalMachine.OpenSubKey(CH340_REGKEY);
+                if(masterRegKey == null)
+                {
+                    throw new Exception("Couldn't open registry key CH340_REGKEY:" + CH340_REGKEY);
+                }
             }
             catch
             {
@@ -104,7 +108,14 @@ namespace PMD
             }
 
             lock (rx_buffer) rx_buffer.Clear();
-            serial_port.Write(new byte[] { cmd }, 0, 1);
+            try
+            {
+                serial_port.Write(new byte[] { cmd }, 0, 1);
+            }
+            catch
+            {
+                return false;
+            }
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
