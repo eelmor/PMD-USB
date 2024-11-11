@@ -133,12 +133,12 @@ namespace PMD {
             if (x_sel > 0 && x_sel < values.Count) {
                 valueString = values[x_sel].ToString(Sensor.Format);
                 g.FillEllipse(markBrush, displayX - 3, graphPoints[x_sel].Y - 3, 6, 6);
-            } else
-            {
+            } else {
                 valueString = values.Last().ToString(Sensor.Format);
             }
 
-            g.DrawString(String.Format("{0,10}", valueString), drawFontLarge, markBrush, new Point(this.Size.Width - 75 - 50, 0));
+            g.DrawString(valueString, drawFontLarge, markBrush, 
+                new PointF(this.Size.Width - g.MeasureString(valueString, drawFontLarge).Width - 5, 5));
 
         }
 
