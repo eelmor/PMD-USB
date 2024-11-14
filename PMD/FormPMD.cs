@@ -99,6 +99,9 @@ namespace PMD {
                 deviceList.AddRange(PMD2_Device.GetAllDevices());
                 deviceList.AddRange(PMD_USB_Device.GetAllDevices());
 
+#if DEBUG
+                deviceList.AddRange(Virtual_PMD_Device.GetAllDevices());
+#endif
                 comboBoxPorts.Invoke((MethodInvoker)delegate
                 {
                     comboBoxPorts.Items.Clear();
