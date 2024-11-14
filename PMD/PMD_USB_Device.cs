@@ -12,6 +12,7 @@ namespace PMD
     {
         public static List<PMD_USB_Device> GetAllDevices(int speed = 1)
         {
+            DeviceCounter = 0;
 
             List<PMD_USB_Device> device_list = new List<PMD_USB_Device>();
 
@@ -82,7 +83,7 @@ namespace PMD
         private const byte PMD_USB_VID = 0xEE;
         private const byte PMD_USB_PID = 0x0A;
 
-        static int DeviceCounter = 0;
+        public static int DeviceCounter = 0;
 
         public event AllSensorsUpdatedEventHandler AllSensorsUpdated;
 

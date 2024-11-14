@@ -15,6 +15,7 @@ namespace PMD
 
         public static List<PMD2_Device> GetAllDevices(int speed = 1)
         {
+            DeviceCounter = 0;
 
             List<PMD2_Device> device_list = new List<PMD2_Device>();
 
@@ -63,7 +64,7 @@ namespace PMD
 
         }
 
-        static int DeviceCounter = 0;
+        public static int DeviceCounter = 0;
 
         #endregion
 
