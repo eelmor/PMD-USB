@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Linq;
+using System.Globalization;
 
 namespace PMD {
     public partial class MonitorGraph : UserControl {
@@ -79,6 +80,8 @@ namespace PMD {
         long time, time2;
         long timeavg;
 
+        private CultureInfo culture_info = new CultureInfo("en-US");
+
         private void panel1_Paint(object sender, PaintEventArgs e) {
 
             Stopwatch stopwatch = new Stopwatch();
@@ -92,8 +95,8 @@ namespace PMD {
             time = (long)(stopwatch.ElapsedTicks * 1000000.0 / Stopwatch.Frequency);
             timeavg = (timeavg * 9 + time) / 10;
 
-            string minValueString = minValue.ToString(Sensor.Format);
-            string maxValueString = maxValue.ToString(Sensor.Format);
+            string minValueString = minValue.ToString(Sensor.Format, culture_info);
+            string maxValueString = maxValue.ToString(Sensor.Format, culture_info);
 
             g.DrawString(Sensor.DescriptionLong, drawFont, drawBrush, 0, 0);
             g.DrawString($"min: {minValueString} max: {maxValueString}", drawFont, drawBrush, 150, 0);
@@ -131,11 +134,11 @@ namespace PMD {
             string valueString;
 
             if (x_sel > 0 && x_sel < values.Count) {
-                valueString = values[x_sel].ToString(Sensor.Format);
+                valueString = values[x_sel].ToString(Sensor.Format, culture_info);
                 g.FillEllipse(markBrush, displayX - 3, graphPoints[x_sel].Y - 3, 6, 6);
             } else
             {
-                valueString = values.Last().ToString(Sensor.Format);
+                valueString = values.Last().ToString(Sensor.Format, culture_info);
             }
 
             g.DrawString(String.Format("{0,10}", valueString), drawFontLarge, markBrush, new Point(this.Size.Width - 75 - 50, 0));

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Windows.Forms;
 
 namespace PMD {
@@ -18,36 +19,6 @@ namespace PMD {
             // Update title
             this.Text = "PMD " + Application.ProductVersion;
 
-            // Populate options
-            /*comboBoxTimeoutAction.Items.Add("Cycle");
-            comboBoxTimeoutAction.Items.Add("OLED Off");
-            comboBoxTimeoutAction.Items.Add("Disabled");
-            comboBoxTimeoutAction.SelectedIndex = 0;
-
-            comboBoxOled.Items.Add("On");
-            comboBoxOled.Items.Add("Off");
-            comboBoxOled.SelectedIndex = 1;
-
-            comboBoxOledRotation.Items.Add("0 deg");
-            comboBoxOledRotation.Items.Add("180 deg");
-            comboBoxOledRotation.SelectedIndex = 0;
-
-            comboBoxDisplaySpeed.Items.Add("0.0s");
-            comboBoxDisplaySpeed.Items.Add("0.2s");
-            comboBoxDisplaySpeed.Items.Add("0.4s");
-            comboBoxDisplaySpeed.Items.Add("0.6s");
-            comboBoxDisplaySpeed.Items.Add("0.8s");
-            comboBoxDisplaySpeed.Items.Add("1.0s");
-            comboBoxDisplaySpeed.Items.Add("1.2s");
-            comboBoxDisplaySpeed.Items.Add("1.4s");
-
-            comboBoxAveraging.Items.Add("29µs (1 sample)");
-            comboBoxAveraging.Items.Add("1.87ms (64 samples)");
-            comboBoxAveraging.Items.Add("119ms (4096 samples)");
-            comboBoxAveraging.Items.Add("0.95s (32768 samples)");*/
-
-            UpdateDeviceList();
-
         }
 
         private void StartMonitoring() {
@@ -59,17 +30,30 @@ namespace PMD {
                 selectedDevice.StartMonitoring();
             }
         }
-
+        DateTime lastMonitorGraphInvalidation = DateTime.Now;
         private void SelectedDevice_AllSensorsUpdated()
         {
-            if(data_logger != null && data_logger.IsLogging)
+            if (data_logger != null && data_logger.IsLogging)
             {
                 data_logger.WriteEntry();
             }
-            foreach (MonitorGraph monitor_graph in graphList)
+            /*foreach (MonitorGraph monitor_graph in graphList)
             {
                 monitor_graph.Redraw();
-            }
+            }*/
+            /*DateTime timeNow = DateTime.Now;
+            if (timeNow - lastMonitorGraphInvalidation > TimeSpan.FromMilliseconds(99))
+            {
+                panelMonitoring.Invoke((MethodInvoker)delegate
+                {
+                    panelMonitoring.Invalidate(true);
+                });
+                lastMonitorGraphInvalidation = timeNow;
+            }*/
+            panelMonitoring.Invoke((MethodInvoker)delegate
+            {
+                panelMonitoring.Invalidate(true);
+            });
         }
 
         private void StopMonitoring()
@@ -77,6 +61,7 @@ namespace PMD {
             if (selectedDevice != null)
             {
                 selectedDevice.StopMonitoring();
+                selectedDevice.AllSensorsUpdated -= SelectedDevice_AllSensorsUpdated;
                 graphList.Clear();
             }
         }
@@ -85,11 +70,12 @@ namespace PMD {
         volatile bool update_device_list_lock = false;
         private void UpdateDeviceList()
         {
-            
-            if(update_device_list_lock)
+
+            if (update_device_list_lock)
             {
                 return;
             }
+
             update_device_list_lock = true;
 
             new System.Threading.Thread(() =>
@@ -114,7 +100,7 @@ namespace PMD {
                         if (device is PMD2_Device pmd2_device)
                         {
                             description += $" ({pmd2_device.Port})";
-                        } 
+                        }
                         else if (device is PMD_USB_Device pmd_usb_device)
                         {
                             description += $" ({pmd_usb_device.Port})";
@@ -138,13 +124,13 @@ namespace PMD {
 
         bool track = false;
         private void Monitor_graph_MouseMove(object sender, MouseEventArgs e) {
-            if(track) {
+            if (track) {
                 MonitorGraph monitor_graph = (MonitorGraph)sender;
             }
         }
 
         private void Monitor_graph_MouseLeave(object sender, EventArgs e) {
-            if(track) {
+            if (track) {
                 MonitorGraph monitor_graph = (MonitorGraph)sender;
                 track = false;
             }
@@ -155,35 +141,13 @@ namespace PMD {
         }
 
         private void FormKTH_FormClosing(object sender, FormClosingEventArgs e) {
-            if(data_logger != null && data_logger.IsLogging)
-            {
-                data_logger.Stop();
-            }
-
+            
             ClosePort();
         }
 
-        private void buttonReset_Click(object sender, EventArgs e) {
-
-        }
-
-        private void buttonBootloader_Click(object sender, EventArgs e) {
-
-        }
-
-        private void buttonStorecfg_Click(object sender, EventArgs e) {
-        }
-
-        private void buttonApply_Click(object sender, EventArgs e) {
-
-            //WriteConfigValues(false);
-            //UpdateConfigValues();
-
-        }
-
         private void buttonOpenPort_Click(object sender, EventArgs e) {
-           
-            if(selectedDevice == null && comboBoxPorts.Items.Count > 0 && comboBoxPorts.SelectedIndex >= 0 && comboBoxPorts.SelectedIndex < comboBoxPorts.Items.Count) {
+
+            if (selectedDevice == null && comboBoxPorts.Items.Count > 0 && comboBoxPorts.SelectedIndex >= 0 && comboBoxPorts.SelectedIndex < comboBoxPorts.Items.Count) {
 
                 selectedDevice = deviceList[comboBoxPorts.SelectedIndex];
 
@@ -191,18 +155,12 @@ namespace PMD {
 
                 buttonOpenPort.Text = "Disconnect";
 
-                buttonApplyConfig.Enabled = true;
-                buttonStorecfg.Enabled = true;
-                buttonHwinfo.Enabled = true;
-                buttonWriteToFile.Enabled = true;
-                buttonFwu.Enabled = true;
                 buttonLog.Enabled = true;
-                buttonReset.Enabled = true;
-                buttonBootloader.Enabled = true;
+                checkBoxLogCsv.Enabled = true;
+                checkBoxLogTextFile.Enabled = true;
+                checkBoxLogHwinfo.Enabled = true;
 
                 data_logger = new DataLogger(selectedDevice.Name);
-
-                //UpdateConfigValues();
 
                 int graph_height = 100;
                 int graph_width = panelMonitoring.Width / 2 - 20;
@@ -225,9 +183,11 @@ namespace PMD {
 
         private void ClosePort()
         {
-            if(selectedDevice != null)
+            StopMonitoring();
+
+            if (data_logger != null && data_logger.IsLogging)
             {
-                selectedDevice.StopMonitoring();
+                buttonLog_Click(null, null);
             }
 
             selectedDevice = null;
@@ -236,60 +196,107 @@ namespace PMD {
             panelMonitoring.Controls.Clear();
 
             buttonOpenPort.Text = "Connect";
-            buttonApplyConfig.Enabled = false;
-            buttonStorecfg.Enabled = false;
-            buttonHwinfo.Enabled = false;
-            buttonWriteToFile.Enabled = false;
-            buttonFwu.Enabled = false;
             buttonLog.Enabled = false;
-            buttonReset.Enabled = false;
-            buttonBootloader.Enabled = false;
+            checkBoxLogCsv.Enabled = false;
+            checkBoxLogTextFile.Enabled = false;
+            checkBoxLogHwinfo.Enabled = false;
 
         }
 
         private void buttonRefreshPorts_Click(object sender, EventArgs e) {
-            
+
             UpdateDeviceList();
 
         }
 
         private void buttonLog_Click(object sender, EventArgs e) {
-            
-        }
 
-        private void buttonWriteToFile_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void buttonFwu_Click(object sender, EventArgs e)
-        {
-        }
-
-        private void buttonHwinfo_Click(object sender, EventArgs e)
-        {
-            if(data_logger == null)
+            if (data_logger == null)
             {
                 return;
             }
 
-            if(data_logger.IsLogging)
+            if (data_logger.IsLogging)
             {
                 data_logger.Stop();
-                buttonHwinfo.Text = "Start";
+                buttonLog.Text = "Start logging";
+                checkBoxLogHwinfo.Enabled = true;
+                checkBoxLogTextFile.Enabled = true;
+                checkBoxLogCsv.Enabled = true;
+
                 return;
+
             }
 
-            data_logger.SetHwinfo(true);
+            bool textFile = checkBoxLogTextFile.Checked;
+            string textFilePath = string.Empty;
+
+            if (textFile) {
+                // Ask for text file path
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.FileName = $"{selectedDevice.Name}.txt";
+                saveFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+                saveFileDialog.FilterIndex = 1;
+                saveFileDialog.RestoreDirectory = true;
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    textFile = true;
+                    textFilePath = saveFileDialog.FileName;
+                }
+            }
+
+            bool csv = checkBoxLogCsv.Checked;
+            string csvFilePath = string.Empty;
+
+            if (csv)
+            {
+                // Ask for CSV file path
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.FileName = $"{selectedDevice.Name}_{DateTime.Now.ToString("yyyyMMdd_HHmm")}.csv";
+                saveFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+                saveFileDialog.FilterIndex = 1;
+                saveFileDialog.RestoreDirectory = true;
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (File.Exists(saveFileDialog.FileName))
+                    {
+                        DialogResult dr = MessageBox.Show($"Overwrite {saveFileDialog.FileName}?", "File already exists", MessageBoxButtons.OKCancel);
+                        if (dr == DialogResult.OK)
+                        {
+                            csv = true;
+                            csvFilePath = saveFileDialog.FileName;
+                        }
+                    } else
+                    {
+                        csv = true;
+                        csvFilePath = saveFileDialog.FileName;
+                    }
+                }
+            }
+
+            data_logger.SetTextFile(textFilePath, textFile);
+            data_logger.SetCsv(csvFilePath, csv);
+            data_logger.SetHwinfo(checkBoxLogHwinfo.Checked);
+
             try
             {
                 data_logger.Start();
-                buttonHwinfo.Text = "Stop";
+
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                try { data_logger.Start(); } catch { }
             }
+
+            if(data_logger.IsLogging) {
+                buttonLog.Text = "Stop logging";
+                checkBoxLogHwinfo.Enabled = false;
+                checkBoxLogTextFile.Enabled = false;
+                checkBoxLogCsv.Enabled = false;
+            }
+
         }
 
         int monitoring_interval = 100;
@@ -329,6 +336,11 @@ namespace PMD {
                 FormCalPMD2 formCalPMD2 = new FormCalPMD2(pmd2_device);
                 formCalPMD2.Show();
             }
+        }
+
+        private void FormPMD_Shown(object sender, EventArgs e)
+        {
+            UpdateDeviceList();
         }
     }
 }
